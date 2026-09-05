@@ -1,1 +1,1 @@
-Politica: integrar funcionalidades apos revisao do codigo.
+Politica: revisar o codigo por Pull Request antes da integracao.
