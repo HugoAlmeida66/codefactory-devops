@@ -1,0 +1,42 @@
+name: Integracao continua
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Testar API
+        run: python -m unittest discover -s tests -v
+      - name: Construir imagem
+        run: docker build -t codefactory:ci .
+      - name: Executar container e verificar resposta HTTP
+        shell: bash
+        run: |
+          docker run -d --name codefactory-ci -p 127.0.0.1:8000:8000 codefactory:ci
+          python - <<'PY'
+          import json, time, urllib.request
+          for attempt in range(30):
+              try:
+                  with urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2) as response:
+                      assert response.status == 200
+                      assert json.load(response) == {'status': 'ok'}
+                  break
+              except (OSError, AssertionError):
+                  if attempt == 29:
+                      raise
+                  time.sleep(1)
+          PY
+          docker ps
+      - name: Registrar logs e remover container
+        if: always()
+        run: |
+          docker logs codefactory-ci || true
+          docker rm -f codefactory-ci || true
