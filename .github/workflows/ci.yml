@@ -27,14 +27,17 @@ jobs:
               try:
                   with urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2) as response:
                       assert response.status == 200
-                      assert json.load(response) == {'status': 'ok'}
+                      payload = json.load(response)
+                      assert payload == {'status': 'ok'}
+                      print('GET /health -> HTTP 200', payload)
                   break
               except (OSError, AssertionError):
                   if attempt == 29:
                       raise
                   time.sleep(1)
           PY
-          docker ps
+          docker ps --filter name=codefactory-ci --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
+          docker inspect --format 'Container em execucao: {{.State.Running}}; usuario: {{.Config.User}}' codefactory-ci
       - name: Registrar logs e remover container
         if: always()
         run: |
