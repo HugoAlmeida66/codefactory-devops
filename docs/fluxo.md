@@ -1,1 +1,1 @@
-Politica: integrar funcionalidades apos revisao do codigo.
+Politica: exigir pipeline aprovado antes da integracao.
